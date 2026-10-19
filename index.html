@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Hold $MOONPK, claim free card packs, rip them open.">
+<title>Degen Pack Vault</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one dark vault screen — ticker bar, holder panel, pack row, then the opened spread. */
+:root{
+  --ink:#140d1c;
+  --ink-2:#1e1429;
+  --ink-3:#2a1c3a;
+  --edge:#3d2a52;
+  --fg:#f2e9ff;
+  --fg-dim:#a692be;
+  --solar:#ff7a2f;
+  --violet:#9d5cff;
+  --mint:#3ee6b0;
+  --font-display:"Syne","Trebuchet MS",sans-serif;
+  --font-body:"DM Sans",system-ui,sans-serif;
+  --font-mono:"DM Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(157,92,255,.28), transparent 70%),
+    radial-gradient(700px 460px at 92% 4%, rgba(255,122,47,.2), transparent 72%),
+    var(--ink);
+  color:var(--fg);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--ink)}
+.wrap{
+  max-width:1060px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 72px;
+}
+a{color:var(--solar)}
+
+/* ticker */
+.ticker{
+  border-bottom:1px solid var(--edge);
+  background:rgba(20,13,28,.72);
+  backdrop-filter:blur(8px);
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:15;
+  overflow:hidden;
+}
+.ticker-in{
+  display:flex;gap:28px;align-items:center;white-space:nowrap;
+  font-family:var(--font-mono);font-size:12.5px;letter-spacing:.04em;color:var(--fg-dim);
+  padding-block:9px;
+  animation:slide 34s linear infinite;
+}
+.ticker-in b{color:var(--mint);font-weight:500}
+.ticker-in .dn{color:var(--solar)}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker-in{animation:none}}
+
+/* hero */
+header{padding-block:46px 30px}
+.eyebrow{
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--violet);margin:0 0 14px;
+}
+h1{
+  font-family:var(--font-display);font-weight:800;
+  font-size:clamp(2.6rem,8vw,4.6rem);line-height:.95;letter-spacing:-.02em;
+  margin:0 0 16px;text-wrap:balance;
+}
+h1 em{font-style:normal;background:linear-gradient(96deg,var(--solar),var(--violet) 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:52ch;color:var(--fg-dim);font-size:1.05rem;margin:0}
+
+/* holder panel */
+.panel{
+  margin-top:34px;border:1px solid var(--edge);border-radius:18px;
+  background:linear-gradient(180deg,var(--ink-2),rgba(30,20,41,.4));
+  padding:20px;
+  display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;
+}
+.stats{display:flex;flex-wrap:wrap;gap:26px;min-width:0}
+.stat{min-width:0}
+.stat span{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-dim)}
+.stat strong{display:block;font-family:var(--font-display);font-weight:600;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.ok{color:var(--mint)}
+button{font:inherit;cursor:pointer;border:0}
+.cta{
+  font-family:var(--font-display);font-weight:800;font-size:1.05rem;letter-spacing:.01em;
+  padding:14px 26px;border-radius:999px;color:#1a0f07;
+  background:linear-gradient(100deg,var(--solar),#ffb15e);
+  box-shadow:0 10px 30px -12px rgba(255,122,47,.75);
+  transition:transform .14s ease,box-shadow .14s ease;
+}
+.cta:hover{transform:translateY(-2px);box-shadow:0 16px 36px -12px rgba(255,122,47,.9)}
+.cta:disabled{background:var(--ink-3);color:var(--fg-dim);box-shadow:none;cursor:not-allowed;transform:none}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+
+/* packs */
+h2{font-family:var(--font-display);font-weight:600;font-size:1.3rem;margin:48px 0 4px}
+.sub{color:var(--fg-dim);font-size:.92rem;margin:0 0 20px}
+.packs{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.pack{
+  position:relative;border:1px solid var(--edge);border-radius:16px;padding:18px;
+  background:
+    linear-gradient(150deg,rgba(157,92,255,.22),rgba(255,122,47,.12) 60%,transparent),
+    var(--ink-2);
+  text-align:left;color:var(--fg);overflow:hidden;
+  transition:transform .16s ease,border-color .16s ease;
+}
+.pack:not(:disabled):hover{transform:translateY(-4px);border-color:var(--violet)}
+.pack::after{
+  content:"";position:absolute;inset:-40% -60%;
+  background:linear-gradient(72deg,transparent 42%,rgba(255,255,255,.14) 50%,transparent 58%);
+  transform:translateX(-30%);transition:transform .5s ease;
+}
+.pack:not(:disabled):hover::after{transform:translateX(30%)}
+.pack .seal{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mint);
+}
+.pack .name{font-family:var(--font-display);font-weight:800;font-size:1.45rem;line-height:1.1;margin:10px 0 6px}
+.pack .cost{font-family:var(--font-mono);font-size:12.5px;color:var(--fg-dim)}
+.pack[data-locked="1"]{filter:grayscale(.7);opacity:.55;cursor:not-allowed}
+.pack[data-locked="1"] .seal{color:var(--fg-dim)}
+
+/* opened spread */
+.spread{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));margin-top:22px;min-height:4px}
+.card{
+  position:relative;aspect-ratio:3/4.3;max-width:100%;
+  border-radius:14px;border:1px solid var(--edge);
+  background:var(--ink-2);perspective:900px;cursor:pointer;padding:0;
+}
+.card .inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.8,.2,1);border-radius:14px}
+.card.flipped .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:13px;overflow:hidden;display:flex;flex-direction:column}
+.back{
+  background:
+    repeating-linear-gradient(45deg,rgba(157,92,255,.18) 0 8px,transparent 8px 16px),
+    linear-gradient(160deg,var(--ink-3),var(--ink));
+  align-items:center;justify-content:center;
+}
+.back span{font-family:var(--font-display);font-weight:800;font-size:1.6rem;color:var(--violet);opacity:.8}
+.front{transform:rotateY(180deg);padding:12px;justify-content:space-between;background:linear-gradient(170deg,var(--ink-3),var(--ink-2))}
+.front .art{
+  flex:1;border-radius:9px;margin-bottom:10px;display:grid;place-items:center;
+  font-size:2.6rem;line-height:1;
+  background:linear-gradient(140deg,rgba(255,255,255,.1),rgba(0,0,0,.35));
+}
+.front .cname{font-family:var(--font-display);font-weight:700;font-size:.98rem;line-height:1.15}
+.front .meta{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-dim);display:flex;justify-content:space-between;gap:8px;margin-top:4px}
+.card[data-r="legendary"]{border-color:#ffc14d;box-shadow:0 0 0 1px rgba(255,193,77,.4),0 14px 40px -18px rgba(255,193,77,.7)}
+.card[data-r="legendary"] .meta b{color:#ffc14d}
+.card[data-r="epic"]{border-color:var(--violet)}
+.card[data-r="epic"] .meta b{color:#c79bff}
+.card[data-r="rare"]{border-color:#4aa8ff}
+.card[data-r="rare"] .meta b{color:#7cc3ff}
+.card[data-r="common"] .meta b{color:var(--fg-dim)}
+.card.pop{animation:pop .4s ease both}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.card .inner{transition:none}.card.pop{animation:none}}
+.hint{font-family:var(--font-mono);font-size:12px;color:var(--fg-dim);margin:14px 0 0}
+footer{margin-top:54px;border-top:1px solid var(--edge);padding-top:18px;font-family:var(--font-mono);font-size:11.5px;color:var(--fg-dim);display:flex;flex-wrap:wrap;gap:10px 22px}
+.addr{word-break:break-all}
+</style>
+</head>
+<body>
+
+<div class="ticker"><div class="ticker-in" id="tick"></div></div>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Hold · Earn · Rip</p>
+  <h1>Hold the bag,<br><em>rip the packs.</em></h1>
+  <p class="lede">Every wallet holding at least 50,000 $MOONPK gets a free pack drop each epoch. Rip it open, pull the board, keep the foils.</p>
+
+  <div class="panel">
+    <div class="stats">
+      <div class="stat"><span>Wallet</span><strong class="addr" id="wallet">Not connected</strong></div>
+      <div class="stat"><span>$MOONPK held</span><strong id="bal">—</strong></div>
+      <div class="stat"><span>Holder status</span><strong id="status">—</strong></div>
+      <div class="stat"><span>Packs ready</span><strong id="packcount">0</strong></div>
+    </div>
+    <button class="cta" id="claim">Connect &amp; claim packs</button>
+  </div>
+</header>
+
+<h2>Your vault</h2>
+<p class="sub">Tap a sealed pack to rip it. Five cards a pack, one guaranteed rare or better.</p>
+<div class="packs" id="packs"></div>
+
+<h2 id="spreadhead" hidden>The pull</h2>
+<p class="sub" id="spreadsub" hidden>Tap any card to flip it.</p>
+<div class="spread" id="spread"></div>
+<p class="hint" id="hint" hidden></p>
+
+<footer>
+  <span>Contract <span class="addr">7MOONpkqRipB4gsGmBLeHoldr9xVaUltZk2pump</span></span>
+  <span>Snapshot every 6h</span>
+  <span>Demo board — no tokens move on this page</span>
+</footer>
+</div>
+
+<script>
+const PACKS = [
+  {name:"Genesis Rip", seal:"Epoch 1", cost:"Free · 50k+ held"},
+  {name:"Diamond Crate", seal:"Epoch 2", cost:"Free · 250k+ held"},
+  {name:"Whale Locker", seal:"Locked", cost:"Needs 1M held", locked:true}
+];
+const CARDS = [
+  {n:"Paper Hands Pete", a:"🧻", r:"common"},
+  {n:"Rug Radar", a:"📡", r:"common"},
+  {n:"Exit Liquidity", a:"🚪", r:"common"},
+  {n:"Gas Gremlin", a:"⛽", r:"common"},
+  {n:"Bonding Curve", a:"📈", r:"rare"},
+  {n:"Sniper Bot", a:"🎯", r:"rare"},
+  {n:"Dev Wallet", a:"🧪", r:"rare"},
+  {n:"Liquidity Burn", a:"🔥", r:"epic"},
+  {n:"Whale Alert", a:"🐋", r:"epic"},
+  {n:"Moonshot Core", a:"🌕", r:"legendary"},
+  {n:"Diamond Hands", a:"💎", r:"legendary"}
+];
+const SERIES = "Series I";
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const byR = r => CARDS.filter(c=>c.r===r);
+
+// ticker
+const tickItems = [
+  'FLOOR <b>0.42 SOL</b>','HOLDERS <b>6,118</b>','PACKS RIPPED <b>21,430</b>',
+  'LAST PULL <b>Diamond Hands</b>','MCAP <span class="dn">$1.82M</span>','EPOCH 2 ENDS IN <b>04:11:58</b>'
+];
+document.getElementById('tick').innerHTML = (tickItems.join(' · ')+' · ').repeat(2);
+
+// packs
+const packsEl = document.getElementById('packs');
+PACKS.forEach((p,i)=>{
+  const b = document.createElement('button');
+  b.className='pack'; b.dataset.locked = p.locked?'1':'0'; b.disabled = true;
+  b.innerHTML = `<div class="seal">${p.seal}</div><div class="name">${p.name}</div><div class="cost">${p.cost}</div>`;
+  b.addEventListener('click',()=>rip(b,p));
+  packsEl.appendChild(b);
+});
+
+// claim
+let claimed = false;
+document.getElementById('claim').addEventListener('click', e=>{
+  if(claimed) return;
+  claimed = true;
+  const btn = e.currentTarget;
+  btn.textContent = 'Checking balance…';
+  setTimeout(()=>{
+    document.getElementById('wallet').textContent = '8Hq4…vRtP';
+    document.getElementById('bal').textContent = '412,900';
+    const s = document.getElementById('status');
+    s.textContent = 'Verified holder'; s.classList.add('ok');
+    document.getElementById('packcount').textContent = '2';
+    btn.textContent = '2 packs claimed';
+    btn.disabled = true;
+    document.querySelectorAll('.pack').forEach(p=>{ if(p.dataset.locked!=='1') p.disabled=false; });
+  }, 900);
+});
+
+// rip
+function rip(btn, p){
+  btn.disabled = true;
+  btn.querySelector('.seal').textContent = 'Ripped';
+  const n = Math.max(0, +document.getElementById('packcount').textContent - 1);
+  document.getElementById('packcount').textContent = n;
+
+  const hit = Math.random();
+  const guaranteed = hit > .93 ? pick(byR('legendary')) : hit > .72 ? pick(byR('epic')) : pick(byR('rare'));
+  const pull = [pick(byR('common')),pick(byR('common')),pick(byR('common')),pick(CARDS),guaranteed];
+
+  document.getElementById('spreadhead').hidden = false;
+  document.getElementById('spreadsub').hidden = false;
+  const spread = document.getElementById('spread');
+  spread.innerHTML = '';
+  pull.forEach((c,i)=>{
+    const el = document.createElement('button');
+    el.className='card pop'; el.dataset.r=c.r;
+    el.style.animationDelay = (i*70)+'ms';
+    el.setAttribute('aria-label','Flip card '+(i+1));
+    el.innerHTML = `<div class="inner">
+      <div class="face back"><span>MP</span></div>
+      <div class="face front">
+        <div class="art">${c.a}</div>
+        <div>
+          <div class="cname">${c.n}</div>
+          <div class="meta"><b>${c.r}</b><span>${SERIES}</span></div>
+        </div>
+      </div></div>`;
+    el.addEventListener('click',()=>el.classList.toggle('flipped'));
+    spread.appendChild(el);
+    setTimeout(()=>el.classList.add('flipped'), 420 + i*170);
+  });
+  const hintEl = document.getElementById('hint');
+  hintEl.hidden = false;
+  hintEl.textContent = `${p.name} ripped — best pull: ${guaranteed.n} (${guaranteed.r}).`;
+}
+</script>
+</body>
+</html>
